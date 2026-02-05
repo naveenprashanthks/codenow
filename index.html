@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Acet Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* --- CSS STYLES --- */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #8b5cf6;
+      --accent-blue: #06b6d4;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border-color: #334155;
+      --border-radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+    a { text-decoration: none; color: inherit; cursor: pointer; }
+    
+    /* Layout & Utilities */
+    .container { max-width: 1200px; margin: 0 auto; }
+    .text-center { text-align: center; }
+    .mb-4 { margin-bottom: 1.5rem; }
+    .mb-3 { margin-bottom: 1rem; }
+    .mt-4 { margin-top: 1.5rem; }
+    .text-muted { color: var(--text-secondary); }
+    .text-sm { font-size: 0.875rem; }
+    .flex { display: flex; }
+    .justify-between { justify-content: space-between; }
+    .items-center { align-items: center; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .font-mono { font-family: 'Fira Code', monospace; }
+
+    /* Auth Styles */
+    .auth-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .auth-card { background: var(--bg-secondary); padding: 2.5rem; border-radius: 1rem; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+    .auth-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; text-align: center; }
+    .auth-subtitle { color: var(--text-secondary); text-align: center; margin-bottom: 2rem; }
+    .navbar-brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary); }
+
+    /* Forms */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
+    .form-input, .form-textarea, .form-select { width: 100%; padding: 0.75rem; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; transition: border-color 0.2s; }
+    .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--accent-primary); }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1.5rem; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; font-size: 0.875rem; }
+    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+    .btn-lg { padding: 1rem 2rem; font-size: 1rem; }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .btn-primary { background: var(--accent-primary); color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
+    .btn-secondary:hover { background: #475569; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+
+    /* Navbar */
+    .navbar { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .navbar-nav { display: flex; list-style: none; gap: 1.5rem; }
+    .nav-link { color: var(--text-secondary); font-weight: 500; transition: color 0.2s; }
+    .nav-link:hover, .nav-link.active { color: var(--accent-primary); }
+
+    /* Cards & Tables */
+    .card { background: var(--bg-secondary); border-radius: var(--border-radius); border: 1px solid var(--border-color); overflow: hidden; margin-bottom: 1.5rem; }
+    .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+    .card-title { font-size: 1.1rem; font-weight: 600; }
+    .card-body { padding: 1.5rem; }
+    .contest-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    
+    .table-container { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .table th { color: var(--text-secondary); font-weight: 500; font-size: 0.875rem; }
+    .table tr:last-child td { border-bottom: none; }
+
+    /* Status & Alerts */
+    .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+    .status-upcoming { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .status-active { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .status-ended { background: rgba(107, 114, 128, 0.2); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.4); }
+    .status-finalized { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    
+    .alert { padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem; font-size: 0.9rem; }
+    .alert-error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: #fca5a5; }
+    .alert-success { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: #6ee7b7; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--bg-secondary); width: 90%; max-width: 500px; border-radius: 1rem; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 0 0 1rem 1rem; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
+
+    /* Loaders & Misc */
+    .loading { padding: 2rem; display: flex; justify-content: center; }
+    .spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .winner-gold { color: #ffd700; font-weight: bold; }
+    .winner-silver { color: #c0c0c0; font-weight: bold; }
+    .winner-bronze { color: #cd7f32; font-weight: bold; }
+
+    /* Result Header Styles */
+    .result-header {
+      background: linear-gradient(to right, var(--bg-secondary), var(--bg-tertiary));
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .result-stat { text-align: right; }
+    .result-stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent-primary); }
+    .result-stat-label { font-size: 0.875rem; color: var(--text-secondary); }
+
+    /* View Management */
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="view-login" class="view-section active">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="text-center mb-4">
+          <a href="#" class="navbar-brand" style="justify-content: center;">
+            <span>⚡</span> Code Acet Admin
+          </a>
+        </div>
+        
+        <h1 class="auth-title">Admin Login</h1>
+        <p class="auth-subtitle">Sign in to manage contests and problems</p>
+        
+        <div id="login-alert-container"></div>
+        
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-input" id="username" placeholder="Enter admin username" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="password" placeholder="Enter password" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Sign In
+          </button>
+        </form>
+        
+        <p class="text-center text-muted text-sm mt-4">
+          <a href="#">← Back to main site</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-dashboard" class="view-section">
+    <nav class="navbar">
+      <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+      <ul class="navbar-nav">
+        <li><a href="#" onclick="router('dashboard')" class="nav-link active">Dashboard</a></li>
+        <li><a href="#" onclick="router('problems')" class="nav-link">Problems</a></li>
+        <li><a href="#" onclick="router('contests')" class="nav-link">Contests</a></li>
+        <li><a href="#" onclick="router('leaderboard')" class="nav-link">🏆 Leaderboard</a></li>
+      </ul>
+      <div class="navbar-actions">
+        <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+      </div>
+    </nav>
+    
+    <div class="container" style="padding: 40px 20px;">
+      <h1 class="mb-4">Dashboard</h1>
+      
+      <div class="contest-grid mb-4">
+        <div class="card">
+          <div class="card-body text-center">
+            <div id="stats-problems-loader" class="spinner" style="margin: 0 auto;"></div>
+            <div id="stats-problems-val" style="display:none;">
+                <div style="font-size: 3rem; color: var(--accent-primary);" id="problem-count">-</div>
+            </div>
+            <p class="text-muted mt-2">Total Problems</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body text-center">
+            <div id="stats-contests-loader" class="spinner" style="margin: 0 auto;"></div>
+             <div id="stats-contests-val" style="display:none;">
+                <div style="font-size: 3rem; color: var(--accent-secondary);" id="contest-count">-</div>
+            </div>
+            <p class="text-muted mt-2">Total Contests</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body text-center">
+            <div id="stats-active-loader" class="spinner" style="margin: 0 auto;"></div>
+            <div id="stats-active-val" style="display:none;">
+                <div style="font-size: 3rem; color: var(--accent-blue);" id="active-count">-</div>
+            </div>
+            <p class="text-muted mt-2">Active Contests</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="card-title">Quick Actions</h3>
+        </div>
+        <div class="card-body">
+          <div class="flex gap-3">
+            <a href="#" onclick="router('create-problem')" class="btn btn-primary">+ Create Problem</a>
+            <a href="#" onclick="router('create-contest')" class="btn btn-secondary">+ Create Contest</a>
+            <a href="#" onclick="router('create-problem')" class="btn btn-success">🤖 AI Generate Problem</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3 class="card-title">🏆 Recent Contest Winners</h3>
+          <a href="#" onclick="router('leaderboard')" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div id="winners-list" class="table-container">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Recent Problems</h3>
+          <a href="#" onclick="router('problems')" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div id="problems-list" class="table-container">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-contests" class="view-section">
+    <nav class="navbar">
+      <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+      <ul class="navbar-nav">
+        <li><a href="#" onclick="router('dashboard')" class="nav-link">Dashboard</a></li>
+        <li><a href="#" onclick="router('problems')" class="nav-link">Problems</a></li>
+        <li><a href="#" onclick="router('contests')" class="nav-link active">Contests</a></li>
+        <li><a href="#" onclick="router('leaderboard')" class="nav-link">🏆 Leaderboard</a></li>
+      </ul>
+      <div class="navbar-actions">
+        <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+      </div>
+    </nav>
+    
+    <div class="container" style="padding: 40px 20px;">
+      <div class="flex justify-between items-center mb-4">
+        <h1>Manage Contests</h1>
+        <a href="#" onclick="router('create-contest')" class="btn btn-primary">+ Create Contest</a>
+      </div>
+      
+      <div class="card">
+        <div class="table-container">
+            <table class="table"><thead><tr>
+             <th>Title</th><th>Status</th><th>Start Time</th><th>Duration</th><th>Problems</th><th>Actions</th>
+             </tr></thead><tbody>
+                <tr>
+                    <td>AI Ignite</td>
+                    <td><span class="status-badge status-finalized">Finalized</span></td>
+                    <td class="text-muted">Oct 12, 2023 10:00 AM</td>
+                    <td class="text-muted">1h 0m</td>
+                    <td class="text-muted">3</td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm">Edit</button>
+                      <button onclick="router('contest-results')" class="btn btn-success btn-sm">View Results</button>
+                    </td>
+                  </tr>
+             </tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-contest-results" class="view-section">
+    <nav class="navbar">
+        <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+        <ul class="navbar-nav">
+          <li><a href="#" onclick="router('dashboard')" class="nav-link">Dashboard</a></li>
+          <li><a href="#" onclick="router('problems')" class="nav-link">Problems</a></li>
+          <li><a href="#" onclick="router('contests')" class="nav-link active">Contests</a></li>
+          <li><a href="#" onclick="router('leaderboard')" class="nav-link">🏆 Leaderboard</a></li>
+        </ul>
+        <div class="navbar-actions">
+          <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 40px 20px;">
+        <div id="printable-area">
+            <div class="result-header">
+                <div>
+                    <h1 style="margin-bottom: 0.5rem;">Weekly Contest #1</h1>
+                    <p class="text-muted">Rankings Finalized</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="result-stat">
+                        <div class="result-stat-val">1h 0m</div>
+                        <div class="result-stat-label">Total Time</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-val">9</div>
+                        <div class="result-stat-label">Total Participants</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header" data-html2canvas-ignore="true"> 
+                    <h3 class="card-title">Leaderboard</h3>
+                    <div class="flex gap-2">
+                        <a href="#" onclick="router('contests')" class="btn btn-secondary btn-sm">Back</a>
+                        <button onclick="downloadPDF()" class="btn btn-primary btn-sm">Download PDF</button>
+                    </div>
+                </div>
+                <div id="contest-results-table" class="table-container">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="view-create-contest" class="view-section">
+    <nav class="navbar">
+        <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+        <ul class="navbar-nav">
+          <li><a href="#" onclick="router('dashboard')" class="nav-link">Dashboard</a></li>
+          <li><a href="#" onclick="router('problems')" class="nav-link">Problems</a></li>
+          <li><a href="#" onclick="router('contests')" class="nav-link active">Contests</a></li>
+        </ul>
+        <div class="navbar-actions">
+          <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+        </div>
+    </nav>
+    
+    <div class="container" style="padding: 40px 20px; max-width: 800px;">
+      <h1 class="mb-4">Create Contest</h1>
+      
+      <form onsubmit="event.preventDefault(); alert('Contest saved (Mock)!'); router('contests');">
+        <div class="card mb-4">
+          <div class="card-header"><h3 class="card-title">Contest Details</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input type="text" class="form-input" required placeholder="Weekly Contest #1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="form-textarea" rows="3" placeholder="Contest description..."></textarea>
+            </div>
+            <div class="flex gap-4">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Start Time *</label>
+                <input type="datetime-local" class="form-input" required>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Duration (minutes) *</label>
+                <input type="number" class="form-input" value="120" min="15" max="480" required>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-3">
+          <button type="submit" class="btn btn-primary btn-lg">Save Contest</button>
+          <a href="#" onclick="router('contests')" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="view-create-problem" class="view-section">
+    <nav class="navbar">
+        <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+        <ul class="navbar-nav">
+          <li><a href="#" onclick="router('dashboard')" class="nav-link">Dashboard</a></li>
+          <li><a href="#" onclick="router('problems')" class="nav-link active">Problems</a></li>
+          <li><a href="#" onclick="router('contests')" class="nav-link">Contests</a></li>
+        </ul>
+        <div class="navbar-actions">
+          <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+        </div>
+      </nav>
+      
+      <div class="container" style="padding: 40px 20px; max-width: 900px;">
+        <div class="flex justify-between items-center mb-4">
+          <h1>Create Problem</h1>
+          <button type="button" class="btn btn-success" onclick="alert('AI Generation Mock triggered')">🤖 Generate with AI</button>
+        </div>
+        
+        <form onsubmit="event.preventDefault(); alert('Problem saved (Mock)!'); router('problems');">
+          <div class="card mb-4">
+            <div class="card-header"><h3 class="card-title">Basic Information</h3></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Title *</label>
+                <input type="text" class="form-input" required placeholder="Problem title">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Difficulty *</label>
+                <select class="form-select" required>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description * (Markdown supported)</label>
+                <textarea class="form-textarea" rows="8" required placeholder="Problem description..."></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary btn-lg">Save Problem</button>
+            <a href="#" onclick="router('dashboard')" class="btn btn-secondary btn-lg">Cancel</a>
+          </div>
+        </form>
+      </div>
+  </div>
+
+  <div id="view-wip" class="view-section">
+    <nav class="navbar">
+        <a href="#" onclick="router('dashboard')" class="navbar-brand"><span>⚡</span> Code Acet Admin</a>
+        <div class="navbar-actions">
+          <button onclick="handleLogout()" class="btn btn-secondary">Sign Out</button>
+        </div>
+    </nav>
+    <div class="container" style="padding: 100px 20px; text-align: center;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🚧</div>
+        <h1>Page Under Construction</h1>
+        <p class="text-muted mb-4">Dear user we are working on this page.</p>
+        <button onclick="router('dashboard')" class="btn btn-primary">Go to Dashboard</button>
+    </div>
+  </div>
+
+
+  <script>
+    // --- AUTH CONFIG ---
+    const VALID_USER = "admin@codeacet";
+    const VALID_PASS = "admin@12345";
+    
+    // --- STATE MANAGEMENT ---
+    let isAuthenticated = false;
+
+    // --- NAVIGATION ROUTER ---
+    function router(viewName) {
+        if (!isAuthenticated && viewName !== 'login') {
+            showView('login');
+            return;
+        }
+
+        // Hide all views
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+
+        // Logic to show specific view
+        switch(viewName) {
+            case 'login':
+                showView('login');
+                break;
+            case 'dashboard':
+                showView('dashboard');
+                initDashboard(); 
+                break;
+            case 'contests':
+                showView('contests');
+                break;
+            case 'contest-results':
+                showView('contest-results');
+                loadContestResults(); // Trigger 10s delay logic
+                break;
+            case 'create-contest':
+                showView('create-contest');
+                break;
+            case 'create-problem':
+                showView('create-problem');
+                break;
+            case 'problems':
+            case 'leaderboard':
+                showView('wip');
+                break;
+            default:
+                showView('wip');
+        }
+    }
+
+    function showView(id) {
+        document.getElementById('view-' + id).classList.add('active');
+    }
+
+    // --- LOGIN LOGIC ---
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const btn = e.target.querySelector('button');
+      const alertContainer = document.getElementById('login-alert-container');
+      
+      // Reset alert
+      alertContainer.innerHTML = '';
+      
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      
+      // Simulate network delay
+      await new Promise(r => setTimeout(r, 1000));
+      
+      if (username === VALID_USER && password === VALID_PASS) {
+        isAuthenticated = true;
+        router('dashboard');
+      } else {
+        alertContainer.innerHTML = `<div class="alert alert-error">Invalid Credentials</div>`;
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+
+    function handleLogout() {
+        isAuthenticated = false;
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('login-alert-container').innerHTML = '';
+        resetDashboard();
+        router('login');
+    }
+
+    // --- DASHBOARD LOGIC (MOCKED DELAYS) ---
+    let dashboardInitialized = false;
+
+    function resetDashboard() {
+        dashboardInitialized = false;
+        // Reset DOM elements to loading state
+        document.getElementById('stats-problems-loader').style.display = 'block';
+        document.getElementById('stats-problems-val').style.display = 'none';
+        
+        document.getElementById('stats-contests-loader').style.display = 'block';
+        document.getElementById('stats-contests-val').style.display = 'none';
+
+        document.getElementById('stats-active-loader').style.display = 'block';
+        document.getElementById('stats-active-val').style.display = 'none';
+
+        document.getElementById('winners-list').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        document.getElementById('problems-list').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    }
+
+    function initDashboard() {
+        if (dashboardInitialized) return; 
+        dashboardInitialized = true;
+
+        // 1. STATS (3 Seconds Delay)
+        setTimeout(() => {
+            // Problems
+            document.getElementById('stats-problems-loader').style.display = 'none';
+            document.getElementById('problem-count').textContent = '3';
+            document.getElementById('stats-problems-val').style.display = 'block';
+
+            // Contests
+            document.getElementById('stats-contests-loader').style.display = 'none';
+            document.getElementById('contest-count').textContent = '1';
+            document.getElementById('stats-contests-val').style.display = 'block';
+
+            // Active
+            document.getElementById('stats-active-loader').style.display = 'none';
+            document.getElementById('active-count').textContent = '0';
+            document.getElementById('stats-active-val').style.display = 'block';
+        }, 3000);
+
+        // 2. RECENT WINNERS (7 Seconds Delay)
+        setTimeout(() => {
+            const winnersHTML = `
+            <table class="table"><thead><tr>
+                <th>Contest</th><th>🥇 1st</th><th>🥈 2nd</th><th>🥉 3rd</th><th>Participants</th><th>Actions</th>
+              </tr></thead><tbody>
+              <tr>
+                <td>AI Ignite</td>
+                <td class="winner-gold">syed_sha_mohamed_jafar</td>
+                <td class="winner-silver">srikrishna_k</td>
+                <td class="winner-bronze">mohin_raman_b</td>
+                <td class="text-muted">9</td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" onclick="router('contest-results')">View Full</button>
+                </td>
+              </tr>
+              </tbody></table>
+            `;
+            document.getElementById('winners-list').innerHTML = winnersHTML;
+        }, 7000);
+
+        // 3. RECENT PROBLEMS (10 Seconds Delay)
+        setTimeout(() => {
+            const problemsHTML = `
+            <table class="table"><thead><tr>
+                <th>Title</th><th>Difficulty</th><th>Created</th><th>Actions</th>
+              </tr></thead><tbody>
+              <tr>
+                <td>longest substring without non-repeating characters</td>
+                <td><span class="status-badge" style="background:#f59e0b20; color:#f59e0b">Medium</span></td>
+                <td class="text-muted">Oct 12, 2023</td>
+                <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+              </tr>
+              <tr>
+                <td>Spiral matrix traversal</td>
+                <td><span class="status-badge" style="background:#f59e0b20; color:#f59e0b">Medium</span></td>
+                <td class="text-muted">Oct 11, 2023</td>
+                <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+              </tr>
+              <tr>
+                <td>number of islands</td>
+                <td><span class="status-badge" style="background:#ef444420; color:#ef4444">Hard</span></td>
+                <td class="text-muted">Oct 10, 2023</td>
+                <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+              </tr>
+              </tbody></table>
+            `;
+            document.getElementById('problems-list').innerHTML = problemsHTML;
+        }, 10000);
+    }
+
+    // --- CONTEST RESULTS LOGIC ---
+    function loadContestResults() {
+        // Reset container to loader
+        const container = document.getElementById('contest-results-table');
+        container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+        // 10 Second Delay
+        setTimeout(() => {
+            const resultsHTML = `
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Rank</th>
+                        <th>Username</th>
+                        <th>Solved</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="winner-gold">1</td>
+                        <td class="font-mono">syed_sha_mohamed_jafar</td>
+                        <td>3/3</td>
+                        <td><span class="status-badge status-finalized">Passed all test cases</span></td>
+                    </tr>
+                    <tr>
+                        <td class="winner-silver">2</td>
+                        <td class="font-mono">srikrishna_k</td>
+                        <td>2/3</td>
+                        <td><span class="status-badge status-finalized">Passed all test cases</span></td>
+                    </tr>
+                    <tr>
+                        <td class="winner-bronze">3</td>
+                        <td class="font-mono">mohin_raman_b</td>
+                        <td>1/3</td>
+                        <td><span class="status-badge status-finalized">Passed all test cases</span></td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">m_aditya</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">praveen_p</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">madhumitha_a</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">siddharth_girish</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">nisha_k</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                    <tr>
+                        <td>-</td>
+                        <td class="font-mono">hariharan_g</td>
+                        <td>0/3</td>
+                        <td class="text-muted">Solved 0 problems</td>
+                    </tr>
+                </tbody>
+            </table>
+            `;
+            container.innerHTML = resultsHTML;
+        }, 10000); // 10s delay
+    }
+
+    // --- PDF GENERATION LOGIC ---
+    async function downloadPDF() {
+        // Simple check if data is loaded
+        const tableContent = document.getElementById('contest-results-table').innerText;
+        if(tableContent.includes('Loading')) {
+            alert('Please wait for the results to fully load.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById('printable-area');
+        
+        // Show temporary alert
+        const originalBtnText = document.querySelector('button[onclick="downloadPDF()"]').innerText;
+        document.querySelector('button[onclick="downloadPDF()"]').innerText = "Generating PDF...";
+        
+        try {
+            // Use html2canvas to capture the element
+            // We force a specific background color because PDFs don't always handle transparency well
+            const canvas = await html2canvas(element, {
+                backgroundColor: '#1e293b', // Match the card background color
+                scale: 2 // Higher scale for better resolution
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            
+            // Calculate PDF dimensions (A4)
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            const imgWidth = pageWidth - 20; // 10mm margin on each side
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            pdf.save('AI_Ignit_Contest.pdf');
+        } catch (error) {
+            console.error('PDF Generation failed:', error);
+            alert('Failed to generate PDF');
+        } finally {
+            document.querySelector('button[onclick="downloadPDF()"]').innerText = originalBtnText;
+        }
+    }
+
+    // --- INITIALIZATION ---
+    router('login');
+
+  </script>
+</body>
+</html>
